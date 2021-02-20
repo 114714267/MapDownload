@@ -2,13 +2,14 @@ var Bagpipe = require('bagpipe')
 var fs = require("fs");
 var request = require("request");
 
-var bou = [113.68652, 30.00000, 122.29980, 36.08462];//下载范围
+var bou = [-180, -90, 180, 90];//下载范围
+// var bou = [110.26919813111942, 35.30331115626859, 113.96268169227176, 39.442867611279894];//下载范围
 var Minlevel = 1;//最小层级
-var Maxlevel = 16;//最大层级
-var token = 'a4ee5c551598a1889adfabff55a5fc27';//天地图key(如果失效去天地图官网申请)
-var zpath = './tiles' // 瓦片目录
+var Maxlevel = 4;//最大层级
+var token = '6cd3dbc827cc5072e9e73a675d573bfc';//天地图key(如果失效去天地图官网申请)
+var zpath = './tiles_c' // 瓦片目录
 var speed = 100;//并发数
-var mapstyle = 'img_w';//地图类型(img_w:影像底图 cia_w:影像标注 vec_w:街道底图 cva_w街道标注)
+var mapstyle = 'vec_c';//地图类型(img_w:影像底图 cia_w:影像标注 vec_w:街道底图 cva_w街道标注)
 
 
 var all = [];
@@ -36,10 +37,10 @@ var user_agent_list_2 = [
 
 
 /**
- * 计算经纬度转换成瓦片坐标
- * @param {Number} lng 经度 
+ * 计算经纬度转换成瓦片坐标--墨卡托
+ * @param {Number} lng 经度
  * @param {Number} lat 纬度
- * @param {Number} level 层级 
+ * @param {Number} level 层级
  */
 function calcXY(lng, lat, level) {
     let x = (lng + 180) / 360
@@ -47,6 +48,24 @@ function calcXY(lng, lat, level) {
     let lat_rad = lat * Math.PI / 180
     let y = (1 - Math.log(Math.tan(lat_rad) + 1 / Math.cos(lat_rad)) / Math.PI) / 2
     let title_Y = Math.floor(y * Math.pow(2, level))
+    return { title_X, title_Y }
+}
+
+function calcXY2(lng, lat, level) {
+    let x = (lng + 180) / 360
+    let title_X = Math.floor(x * Math.pow(2, level))
+
+    // let lat_rad = lat * Math.PI / 180
+    // let y = (1 - Math.log(Math.tan(lat_rad) + 1 / Math.cos(lat_rad)) / Math.PI) / 2
+    // let title_Y = Math.floor(y * Math.pow(2, level))
+
+    let lat_rad = (180 / Math.pow(2, level))
+
+    let title_Y =  -Math.floor((lat -90)/lat_rad/2)
+
+
+    console.log(title_X)
+    console.log(title_Y)
     return { title_X, title_Y }
 }
 /**
@@ -58,8 +77,16 @@ function calcXY(lng, lat, level) {
 function mainnAllXY(bounding, Minlevel, Maxlevel) {
     for (i = Minlevel; i <= Maxlevel; i++) {
         alli = {}
-        let p1 = calcXY(bounding[2], bounding[3], i);
-        let p2 = calcXY(bounding[0], bounding[1], i);
+        let p1
+        let p2
+        if(mapstyle.indexOf('_w')!==-1){
+            debugger
+            p1 = calcXY(bounding[2], bounding[3], i);
+            p2 = calcXY(bounding[0], bounding[1], i);
+        }else {
+            p1 = calcXY2(bounding[2], bounding[3], i);
+            p2 = calcXY2(bounding[0], bounding[1], i);
+        }
         alli.t = i // 层级
         alli.x = [p2.title_X, p1.title_X] // 瓦片横坐标范围（左至右）
         alli.y = [p1.title_Y, p2.title_Y] // 瓦片纵坐标范围（下至上）
@@ -115,9 +142,9 @@ function task() {
 
 /**
  * 下载图片方法
- * @param {Number} x 
- * @param {Number} y 
- * @param {Number} z 
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} z
  */
 function download(x, y, z) {
     var ts = Math.floor(Math.random() * 8)//随机生成0-7台服务器
