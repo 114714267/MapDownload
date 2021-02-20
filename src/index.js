@@ -9,7 +9,7 @@ var Maxlevel = 4;//最大层级
 var token = '6cd3dbc827cc5072e9e73a675d573bfc';//天地图key(如果失效去天地图官网申请)
 var zpath = './tiles_c' // 瓦片目录
 var speed = 100;//并发数
-var mapstyle = 'vec_c';//地图类型(img_w:影像底图 cia_w:影像标注 vec_w:街道底图 cva_w街道标注)
+var mapstyle = 'vec_c';//地图类型(img_w:影像底图 cia_w:影像标注 vec_w:街道底图 cva_w街道标注)  （_c 请求天地图的 cgs2000 经纬度瓦片）
 
 
 var all = [];
